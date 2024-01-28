@@ -38,10 +38,10 @@ glm::vec2 camOri = glm::vec2(0, 0);
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
 const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_NV_FILL_RECTANGLE_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 const std::vector<const char*> validationLayers = {
@@ -218,6 +218,7 @@ private:
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
         glfwSetKeyCallback(window, keyCallback);
+        glfwSetCursorPosCallback(window, cursor_position_callback);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
@@ -1348,7 +1349,7 @@ private:
     }
 
     void move(int key) {
-        float myMove = 0.2;
+        float myMove = 0.01;
         if (key == GLFW_KEY_W) {
             camCoo = glm::vec3(camCoo.x + glm::sin(camOri.y)/4*myMove, camCoo.y + glm::cos(camOri.y)/4*myMove, camCoo.z);
         }
@@ -1375,7 +1376,6 @@ private:
     void updateUniformBuffer(uint32_t currentImage) {
         unsigned __int64 time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        std::cout << keyPress << std::endl;
         if (keyPress != -1)
         {
             move(keyPress);
@@ -1498,14 +1498,18 @@ int main() {
     return EXIT_SUCCESS;
 }
 
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+{
+}
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if ((action==GLFW_RELEASE)) {
+    if ((action==GLFW_RELEASE && keyPress==key)) {
         keyPress=-1;
         return;
     }
 
-    if (!(action==GLFW_PRESS)) {
+    if (!(action==GLFW_PRESS||action==GLFW_REPEAT)) {
         return;
     }
 
