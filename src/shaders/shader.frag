@@ -17,9 +17,9 @@ const float renderDistance = 40;
 
 vec2 camOri = ubo.camOri;
 
-const int bonces = 4;
+const int bonces = 2;
 
-const int gridSize = 3;
+const int gridSize = 5;
 int cubeCoo[gridSize][gridSize][gridSize];
 
 vec3 rayDir;
@@ -55,6 +55,12 @@ int getVoxel(ivec3 rayPos) {
     return cubeCoo[rayPos.x][rayPos.y][rayPos.z];
 }
 
+uint random(uint seed){
+    uint state = seed * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
 int voxelTransversal() {
     ivec3 mapPos = ivec3(floor(rayPos));
 
@@ -68,7 +74,7 @@ int voxelTransversal() {
     
     int blockType;
   
-    while (int i = 0; i < renderDistance; i++) {
+    for (int i = 0; i < renderDistance; i++) {
         blockType = getVoxel(mapPos);
         if (blockType != 0) continue;
         mask = lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy));
@@ -77,30 +83,61 @@ int voxelTransversal() {
 		mapPos += ivec3(vec3(mask)) * rayStep;
     }
 
-    vec3 rayNorm = ivec3(0, 0, 0);
-
+    vec3 rayNorm = -(ivec3(vec3(mask)) * rayStep);
+    
+    float t;
     if (mask.x) {
-        rayNorm.x=-rayStep.x;
-	}
-	if (mask.y) {
-		rayNorm.y=-rayStep.y;
-	}
-	if (mask.z) {
-		rayNorm.z=-rayStep.z;
-	}
-    rayPos = mapPos + rayNorm * 0.00001;
+        if (rayStep.x<0) {
+            t=(rayPos.x-(mapPos.x+1))/rayDir.x;
+            rayPos.y = rayDir.y * t + rayPos.y;
+            rayPos.z = rayDir.z * t + rayPos.z;
 
+        } else {
+            t=(rayPos.x-(mapPos.x))/rayDir.x;
+            rayPos.y = rayDir.y * t + rayPos.y;
+            rayPos.z = rayDir.z * t + rayPos.z;
+
+        }
+    }
+    
+    if (mask.y) {
+        if (rayStep.y<0) {
+            t=(rayPos.y-(mapPos.y+1))/rayDir.y;
+            rayPos.x = rayDir.x * t + rayPos.x;
+            rayPos.z = rayDir.z * t + rayPos.z;
+
+        } else {
+            t=(rayPos.y-(mapPos.y))/rayDir.y;
+            rayPos.x = rayDir.x * t + rayPos.x;
+            rayPos.z = rayDir.z * t + rayPos.z;
+            
+        }
+    }
+
+    if (mask.z) {
+        if (rayStep.z<0) {
+            t=(rayPos.z-(mapPos.z+1))/rayDir.z;
+            rayPos.y = rayDir.y * t + rayPos.y;
+            rayPos.x = rayDir.x * t + rayPos.x;
+
+        } else {
+            t=(rayPos.z-(mapPos.z))/rayDir.z;
+            rayPos.y = rayDir.y * t + rayPos.y;
+            rayPos.x = rayDir.x * t + rayPos.x;
+            
+        }
+    }
+
+    rayPos = mapPos + 1;
+
+    
+    rayPos += rayNorm * 0.00001;
+
+    //rayDir = normalize(reflect(rayDir, rayNorm + 0.01*vec3(random(uint(ubo.iTime*rayPos.x+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.y+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.z+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)))));
     rayDir = normalize(reflect(rayDir, rayNorm));
 
     return blockType;
 }
-
-uint random(uint seed){
-    uint state = seed * 747796405u + 2891336453u;
-    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    return (word >> 22u) ^ word;
-}
-
 
 vec4 colorToInvert(vec4 color) {
     color.x = color.x * color.w;
@@ -113,7 +150,7 @@ vec4 colorToInvert(vec4 color) {
 
 bool choosePixColor() {
 
-    vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 color = vec4(0.02, 0.02, 0.02, 1.0);
 
     for (int i = 0; i < bonces; i++) {
         int blockType = voxelTransversal();
@@ -123,7 +160,7 @@ bool choosePixColor() {
             return true;
         }
         if (blockType == 1) {
-            color = color + colorToInvert(vec4(0.208, 0.6, 0.165, -1.0));
+            color = color + colorToInvert(vec4(0.208, 0.6, 0.165, 1.0));
         }
         if (blockType == 2) {
             color = color + colorToInvert(vec4(0.961, 0.914, 0.043, -1.0));
@@ -146,7 +183,8 @@ void main() {
     }
 
     cubeCoo[0][0][0] = 1;
-    cubeCoo[0][2][0] = 2;
+    cubeCoo[0][4][0] = 2;
+    cubeCoo[4][0][0] = 3;
     /*cubeCoo[0][0][1] = 3;
     cubeCoo[0][0][2] = 3;
     cubeCoo[0][1][0] = 3;
