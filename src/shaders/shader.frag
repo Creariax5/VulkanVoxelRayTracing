@@ -92,10 +92,14 @@ int voxelTransversal() {
             rayPos.y = rayDir.y * t + rayPos.y;
             rayPos.z = rayDir.z * t + rayPos.z;
 
+            rayPos.x = mapPos.x + 1;
+
         } else {
             t=(rayPos.x-(mapPos.x))/rayDir.x;
             rayPos.y = rayDir.y * t + rayPos.y;
             rayPos.z = rayDir.z * t + rayPos.z;
+
+            rayPos.x = mapPos.x;
 
         }
     }
@@ -106,10 +110,14 @@ int voxelTransversal() {
             rayPos.x = rayDir.x * t + rayPos.x;
             rayPos.z = rayDir.z * t + rayPos.z;
 
+            rayPos.y = mapPos.y + 1;
+
         } else {
             t=(rayPos.y-(mapPos.y))/rayDir.y;
             rayPos.x = rayDir.x * t + rayPos.x;
             rayPos.z = rayDir.z * t + rayPos.z;
+
+            rayPos.y = mapPos.y;
             
         }
     }
@@ -120,15 +128,17 @@ int voxelTransversal() {
             rayPos.y = rayDir.y * t + rayPos.y;
             rayPos.x = rayDir.x * t + rayPos.x;
 
+            rayPos.z = mapPos.z + 1;
+
         } else {
             t=(rayPos.z-(mapPos.z))/rayDir.z;
             rayPos.y = rayDir.y * t + rayPos.y;
             rayPos.x = rayDir.x * t + rayPos.x;
+
+            rayPos.z = mapPos.z;
             
         }
     }
-
-    rayPos = mapPos + 1;
 
     
     rayPos += rayNorm * 0.00001;
