@@ -12,15 +12,26 @@ layout(binding = 0) uniform UniformBufferObject {
 layout(location = 0) in vec3 fragColor;
 layout(location = 0) out vec4 outColor;
 
+struct Cube {
+  uint type;
+};
+
+const int gridSize = 8;
+
+layout(std140, binding = 1) readonly buffer cubesSSBOIn {
+   Cube cubesIn[gridSize][gridSize][gridSize];
+};
+
+layout(std140, binding = 2) buffer cubesSSBOOut {
+   Cube cubesOut[gridSize][gridSize][gridSize];
+};
+
 const float pi = 3.14159265359;
 const float renderDistance = 40;
 
 vec2 camOri = ubo.camOri;
 
 const int bonces = 2;
-
-const int gridSize = 5;
-int cubeCoo[gridSize][gridSize][gridSize];
 
 vec3 rayDir;
 vec3 rayPos;
@@ -41,7 +52,7 @@ vec3 rot(vec3 vec, vec3 axeRot, float oriW) {
     axeRot * dot(vec, axeRot) * (1 - cos(oriW));
 }
 
-int getVoxel(ivec3 rayPos) {
+uint getVoxel(ivec3 rayPos) {
 	if ((0 > rayPos.x) || (gridSize <= rayPos.x)) {
         return 0;
     }
@@ -52,7 +63,7 @@ int getVoxel(ivec3 rayPos) {
         return 0;
     }
 
-    return cubeCoo[rayPos.x][rayPos.y][rayPos.z];
+    return cubesIn[rayPos.x][rayPos.y][rayPos.z].type;
 }
 
 uint random(uint seed){
@@ -61,7 +72,7 @@ uint random(uint seed){
     return (word >> 22u) ^ word;
 }
 
-int voxelTransversal() {
+uint voxelTransversal() {
     ivec3 mapPos = ivec3(floor(rayPos));
 
 	vec3 deltaDist = abs(vec3(length(rayDir)) / rayDir);
@@ -72,7 +83,7 @@ int voxelTransversal() {
 
     bvec3 mask;
     
-    int blockType;
+    uint blockType;
   
     for (int i = 0; i < renderDistance; i++) {
         blockType = getVoxel(mapPos);
@@ -143,7 +154,7 @@ int voxelTransversal() {
     
     rayPos += rayNorm * 0.00001;
 
-    //rayDir = normalize(reflect(rayDir, rayNorm + 0.01*vec3(random(uint(ubo.iTime*rayPos.x+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.y+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.z+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)))));
+    //rayDir = normalize(reflect(rayDir, rayNorm + 0.0001*vec3(random(uint(ubo.iTime*rayPos.x+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.y+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.z+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)))));
     rayDir = normalize(reflect(rayDir, rayNorm));
 
     return blockType;
@@ -160,10 +171,10 @@ vec4 colorToInvert(vec4 color) {
 
 bool choosePixColor() {
 
-    vec4 color = vec4(0.02, 0.02, 0.02, 1.0);
+    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
 
     for (int i = 0; i < bonces; i++) {
-        int blockType = voxelTransversal();
+        uint blockType = voxelTransversal();
 
         if (blockType == 0) {
             outColor = color;
@@ -173,10 +184,13 @@ bool choosePixColor() {
             color = color + colorToInvert(vec4(0.208, 0.6, 0.165, 1.0));
         }
         if (blockType == 2) {
-            color = color + colorToInvert(vec4(0.961, 0.914, 0.043, -1.0));
+            color = color + colorToInvert(vec4(0.961, 0.914, 0.043, 1.0));
         }
         if (blockType == 3) {
-            color = color + colorToInvert(vec4(0.812, 0.153, 0.733, -1.0));
+            color = color + colorToInvert(vec4(0.812, 0.153, 0.733, 1.0));
+        }
+        if (blockType > 3) {
+            color = color + colorToInvert(vec4(0.4, 0.4, 0.5, 0.2));
         }
     }
     outColor = color;
@@ -184,45 +198,8 @@ bool choosePixColor() {
 }
 
 void main() {
-    for (int i = 0; i < gridSize; i++) {
-        for (int j = 0; j < gridSize; j++) {
-            for (int k = 0; k < gridSize; k++) {
-                cubeCoo[i][j][k] = 0;
-            }
-        }
-    }
-
-    cubeCoo[0][0][0] = 1;
-    cubeCoo[0][4][0] = 2;
-    cubeCoo[4][0][0] = 3;
-    /*cubeCoo[0][0][1] = 3;
-    cubeCoo[0][0][2] = 3;
-    cubeCoo[0][1][0] = 3;
-    cubeCoo[0][1][1] = 3;
-    cubeCoo[0][1][2] = 3;
-    cubeCoo[0][2][0] = 3;
-    cubeCoo[0][2][1] = 3;
-    cubeCoo[0][2][2] = 3;
-    
-    cubeCoo[2][0][0] = 2;
-    cubeCoo[2][0][1] = 3;
-    cubeCoo[2][0][2] = 3;
-    cubeCoo[2][1][0] = 3;
-    cubeCoo[2][1][1] = 3;
-    cubeCoo[2][1][2] = 3;
-    cubeCoo[2][2][0] = 3;
-    cubeCoo[2][2][1] = 3;
-    cubeCoo[2][2][2] = 3;
-
-    cubeCoo[1][0][0] = 2;
-    cubeCoo[1][0][2] = 3;
-    cubeCoo[1][1][2] = 3;
-    cubeCoo[1][2][0] = 3;
-    cubeCoo[1][2][2] = 3;*/
-
     float midSize = ubo.iResolution.x/2;
     vec2 deplacement = vec2((gl_FragCoord.y-midSize)/midSize, (gl_FragCoord.x-midSize)/midSize);
-    //vec2 mouse = ubo.iMouse/ubo.iResolution.xy;
 
     camOri.x = camOri.x + deplacement.x;
     vec3 camVec = oriToVec(camOri);
