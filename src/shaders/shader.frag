@@ -7,6 +7,7 @@ layout(binding = 0) uniform UniformBufferObject {
 
     vec3 camCoo;
     vec2 camOri;
+    int iClick;
 } ubo;
 
 layout(location = 0) in vec3 fragColor;
@@ -14,6 +15,12 @@ layout(location = 0) out vec4 outColor;
 
 struct Cube {
   uint type;
+};
+
+struct Block {
+  vec3 coords;
+  uint type;
+  vec3 norm;
 };
 
 const int gridSize = 128;
@@ -27,11 +34,11 @@ layout(std140, binding = 2) buffer cubesSSBOOut {
 };
 
 const float pi = 3.14159265359;
-const float renderDistance = 128;
+const float renderDistance = 64;
 
 vec2 camOri = ubo.camOri;
 
-const int bonces = 10;
+const int bonces = 3;
 
 vec3 rayDir;
 vec3 rayPos;
@@ -72,7 +79,7 @@ uint random(uint seed){
     return (word >> 22u) ^ word;
 }
 
-uint voxelTransversal() {
+Block voxelTransversal() {
     ivec3 mapPos = ivec3(floor(rayPos));
 
 	vec3 deltaDist = abs(vec3(length(rayDir)) / rayDir);
@@ -83,11 +90,11 @@ uint voxelTransversal() {
 
     bvec3 mask;
     
-    uint blockType;
+    Block block;
   
     for (int i = 0; i < renderDistance; i++) {
-        blockType = getVoxel(mapPos);
-        if (blockType != 0) continue;
+        block.type = getVoxel(mapPos);
+        if (block.type != 0) continue;
         mask = lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy));
 
 		sideDist += vec3(mask) * deltaDist;
@@ -157,7 +164,12 @@ uint voxelTransversal() {
     //rayDir = normalize(reflect(rayDir, rayNorm + 0.0001*vec3(random(uint(ubo.iTime*rayPos.x+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.y+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)), random(uint(ubo.iTime*rayPos.z+gl_FragCoord.x+gl_FragCoord.y*ubo.iResolution.x)))));
     rayDir = normalize(reflect(rayDir, rayNorm));
 
-    return blockType;
+
+
+    block.coords = mapPos;
+    block.norm = rayNorm;
+
+    return block;
 }
 
 vec4 colorToInvert(vec4 color) {
@@ -174,7 +186,7 @@ bool choosePixColor() {
     vec4 color = vec4(0.2, 0.0, 0.0, 1.0);
 
     for (int i = 0; i < bonces; i++) {
-        uint blockType = voxelTransversal();
+        uint blockType = voxelTransversal().type;
 
         if (blockType == 0) {
             outColor = color;
@@ -214,5 +226,20 @@ void main() {
 
     if (!choosePixColor()) {
         outColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    if (ubo.iClick != -1 && ((gl_FragCoord.y-1 < ubo.iMouse.y && gl_FragCoord.y+1 > ubo.iMouse.y) && (gl_FragCoord.x-1 < ubo.iMouse.x && gl_FragCoord.x+1 > ubo.iMouse.x))) {
+        rayDir = camVec;
+        rayPos = ubo.camCoo;
+        Block blockE = voxelTransversal();
+        if (blockE.type != 0) {
+            if (ubo.iClick == 0) {
+                ivec3 coord = ivec3(blockE.coords);
+                cubesOut[coord.x][coord.y][coord.z].type = 0;
+            }
+            if (ubo.iClick == 1) {
+                ivec3 coord = ivec3(blockE.coords + blockE.norm * 1);
+                cubesOut[coord.x][coord.y][coord.z].type = 1;
+            }
+        }
     }
 }

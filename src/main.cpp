@@ -33,14 +33,15 @@ const float PI = 3.14159265359;
 const uint32_t MAP_SIZE = 128;
 
 int keyPress = -1;
+int click = -1;
 
 glm::vec3 camCoo = glm::vec3(5, 5, 5);
 glm::vec2 camOri = glm::vec2(0, 0);
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
+const int MAX_FRAMES_IN_FLIGHT = 1;
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int key, int action, int mods);
 
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -153,7 +154,8 @@ struct UniformBufferObject {
     alignas(8) glm::vec2 iResolution;
     alignas(8) glm::vec2 iMouse;
     alignas(16) glm::vec3 camCoo;
-    alignas(8) glm::vec2 camOri;    
+    alignas(8) glm::vec2 camOri;
+    glm::int16 iClick;
 };
 
 glm::vec3 oriToVec(glm::vec2 ori) {
@@ -247,7 +249,7 @@ private:
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
         glfwSetKeyCallback(window, keyCallback);
-        glfwSetCursorPosCallback(window, cursor_position_callback);
+        glfwSetMouseButtonCallback(window, mouse_button_callback);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
@@ -1464,7 +1466,7 @@ private:
     }
 
     void move(int key) {
-        float myMove = 0.01;
+        float myMove = 0.02;
         if (key == GLFW_KEY_W) {
             camCoo = glm::vec3(camCoo.x + glm::sin(camOri.y)/4*myMove, camCoo.y + glm::cos(camOri.y)/4*myMove, camCoo.z);
         }
@@ -1513,6 +1515,8 @@ private:
         
         camOri = glm::vec2(ubo.iMouse.y/200*PI/2, ubo.iMouse.x/200*PI/2);
         ubo.camOri = camOri;
+
+        ubo.iClick = click;
 
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 
@@ -1618,12 +1622,31 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
-{
+void mouse_button_callback(GLFWwindow* window, int key, int action, int mods){
+    if ((action==GLFW_RELEASE && click==key)) {
+        click=-1;
+        return;
+    }
+
+    if (!(action==GLFW_PRESS||action==GLFW_REPEAT)) {
+        return;
+    }
+
+    if (key == GLFW_MOUSE_BUTTON_LEFT) {
+        click = key;
+        std::cout << click  << std::endl;
+    }
+
+    if (key == GLFW_MOUSE_BUTTON_RIGHT) {
+        click = key;
+        std::cout << click  << std::endl;
+    }
 }
+
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    
     if ((action==GLFW_RELEASE && keyPress==key)) {
         keyPress=-1;
         return;
