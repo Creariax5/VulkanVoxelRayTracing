@@ -16,7 +16,7 @@ struct Cube {
   uint type;
 };
 
-const int gridSize = 8;
+const int gridSize = 128;
 
 layout(std140, binding = 1) readonly buffer cubesSSBOIn {
    Cube cubesIn[gridSize][gridSize][gridSize];
@@ -27,11 +27,11 @@ layout(std140, binding = 2) buffer cubesSSBOOut {
 };
 
 const float pi = 3.14159265359;
-const float renderDistance = 40;
+const float renderDistance = 128;
 
 vec2 camOri = ubo.camOri;
 
-const int bonces = 2;
+const int bonces = 10;
 
 vec3 rayDir;
 vec3 rayPos;
@@ -171,7 +171,7 @@ vec4 colorToInvert(vec4 color) {
 
 bool choosePixColor() {
 
-    vec4 color = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 color = vec4(0.2, 0.0, 0.0, 1.0);
 
     for (int i = 0; i < bonces; i++) {
         uint blockType = voxelTransversal();
@@ -190,7 +190,7 @@ bool choosePixColor() {
             color = color + colorToInvert(vec4(0.812, 0.153, 0.733, 1.0));
         }
         if (blockType > 3) {
-            color = color + colorToInvert(vec4(0.4, 0.4, 0.5, 0.2));
+            color = color + colorToInvert(vec4(0.4, 0.4, 0.5, 0.1));
         }
     }
     outColor = color;

@@ -191,3 +191,19 @@ int main() {
 
     return 0;
 }
+
+
+/*Pos cubeCoos[MAP_SIZE][MAP_SIZE][MAP_SIZE];
+
+        std::vector<std::vector<std::vector<Pos > > > cubeCoos(MAP_SIZE, std::vector<std::vector<Pos> >(MAP_SIZE, std::vector<Pos>(MAP_SIZE)));
+        for (int x = 0; x<MAP_SIZE; x++) {
+            for (int y = 0; y<MAP_SIZE; y++) {
+                for (int z = 0; z<MAP_SIZE; z++) {
+                    cubeCoos[x][y][z].position = 0;
+                }
+            }
+        }
+
+        cubeCoos[0][0][0].position = 1;
+        cubeCoos[0][4][0].position = 2;
+        cubeCoos[4][0][0].position = 3;*/

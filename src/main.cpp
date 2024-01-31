@@ -30,7 +30,7 @@ const uint32_t HEIGHT = 800;
 
 const float PI = 3.14159265359;
 
-const uint32_t MAP_SIZE = 8;
+const uint32_t MAP_SIZE = 128;
 
 int keyPress = -1;
 
@@ -43,9 +43,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
 const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_NV_FILL_RECTANGLE_EXTENSION_NAME
-};
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -125,8 +123,8 @@ const std::vector<Vertex> vertices = {
     {{-1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}
 };
 
-struct Pos {
-    glm::uint32_t position;
+struct alignas(16) Pos {
+    glm::uint32 position;
 
     static VkVertexInputBindingDescription getBindingDescription() {
         VkVertexInputBindingDescription bindingDescription{};
@@ -1119,23 +1117,25 @@ private:
     void createStorageBuffers() {
         std::cout << msg.Send("creating Storage Buffer", MSG_INDENT_NEXT) << std::endl;
 
-        std::vector<std::vector<std::vector<Pos > > > cubeCoos(MAP_SIZE, std::vector<std::vector<Pos> >(MAP_SIZE, std::vector<Pos>(MAP_SIZE)));
-        for (auto& x : cubeCoos) {
-            for (auto& y : x) {
-                for (auto& z : y) {
-                    z.position = glm::int64(0);
-                    std::cout << "hi" << std::endl;
-                }
-            }
+        std::vector<Pos> cubeCoos(MAP_SIZE*MAP_SIZE*MAP_SIZE);
+        for (auto& cubeCoo : cubeCoos) {
+            cubeCoo.position = 0;
         }
 
-        cubeCoos[0][0][0].position = 1;
-        cubeCoos[0][4][0].position = 2;
-        cubeCoos[4][0][0].position = 3;
-
-        std::cout << sizeof(Pos) << std::endl;
-
-        std::cout << sizeof(Pos) * MAP_SIZE * MAP_SIZE * MAP_SIZE << std::endl;
+        cubeCoos[0*MAP_SIZE*MAP_SIZE + 1*MAP_SIZE + 3].position = 1;
+        cubeCoos[1*MAP_SIZE*MAP_SIZE + 3*MAP_SIZE + 0].position = 2;
+        cubeCoos[2*MAP_SIZE*MAP_SIZE + 3*MAP_SIZE + 0].position = 2;
+        cubeCoos[3*MAP_SIZE*MAP_SIZE + 3*MAP_SIZE + 0].position = 2;
+        cubeCoos[0*MAP_SIZE*MAP_SIZE + 3*MAP_SIZE + 0].position = 2;
+        cubeCoos[0*MAP_SIZE*MAP_SIZE + 4*MAP_SIZE + 0].position = 3;
+        cubeCoos[4*MAP_SIZE*MAP_SIZE + 45*MAP_SIZE + 0].position = 2;
+        cubeCoos[57*MAP_SIZE*MAP_SIZE + 7*MAP_SIZE + 7].position = 3;
+        cubeCoos[27*MAP_SIZE*MAP_SIZE + 8*MAP_SIZE + 8].position = 3;
+        cubeCoos[46*MAP_SIZE*MAP_SIZE + 7*MAP_SIZE + 12].position = 3;
+        cubeCoos[34*MAP_SIZE*MAP_SIZE + 7*MAP_SIZE + 15].position = 3;
+        cubeCoos[34*MAP_SIZE*MAP_SIZE + 7*MAP_SIZE + 25].position = 3;
+        cubeCoos[16*MAP_SIZE*MAP_SIZE + 34*MAP_SIZE + 24].position = 3;
+        cubeCoos[24*MAP_SIZE*MAP_SIZE + 61*MAP_SIZE + 34].position = 3;
 
         VkDeviceSize bufferSize = sizeof(Pos) * MAP_SIZE * MAP_SIZE * MAP_SIZE;
 
@@ -1145,6 +1145,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+
         memcpy(data, cubeCoos.data(), (size_t)bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
@@ -1565,6 +1566,11 @@ private:
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroyBuffer(device, uniformBuffers[i], nullptr);
             vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+        }
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroyBuffer(device, storageBuffers[i], nullptr);
+            vkFreeMemory(device, storageBuffersMemory[i], nullptr);
         }
 
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
