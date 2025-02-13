@@ -24,36 +24,6 @@ To build and run this project, you'll need:
 - GLM (OpenGL Mathematics)
 - A graphics card with Vulkan support
 - C++ compiler with C++17 support
-- CMake (3.10 or higher)
-
-## Project Structure
-
-```
-.
-├── shaders/
-│   ├── frag.spv     # Fragment shader (compiled)
-│   └── vert.spv     # Vertex shader (compiled)
-├── MY/
-│   └── msgSys.cpp   # Messaging system for debug output
-└── main.cpp         # Main application code
-```
-
-## Building
-
-1. Make sure you have all prerequisites installed
-2. Create a build directory:
-```bash
-mkdir build
-cd build
-```
-3. Configure with CMake:
-```bash
-cmake ..
-```
-4. Build the project:
-```bash
-make
-```
 
 ## Controls
 
@@ -103,16 +73,3 @@ Contributions are welcome! Please feel free to submit pull requests with improve
 
 This project is open source and available under the MIT License.
 
-## Known Issues
-
-- Some graphics cards may not support all required Vulkan extensions
-- Performance may vary significantly based on render distance and bounce count settings
-
-## Future Improvements
-
-- [ ] Implement dynamic voxel updates
-- [ ] Add texture support
-- [ ] Optimize ray tracing algorithm
-- [ ] Add more complex materials
-- [ ] Implement ambient occlusion
-- [ ] Add shadow rendering
